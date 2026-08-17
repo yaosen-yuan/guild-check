@@ -116,6 +116,31 @@ body{
 @keyframes orbit-in{ from{ opacity:0; transform:translate(-50%,-50%) scale(.86); } }
 .orbit{ animation:orbit-in 1.6s cubic-bezier(.22,1,.36,1) both; }
 
+
+/* ---------- 入選門檻標記塊（與次要小灰字視覺分離） ---------- */
+.gate{
+  display:flex; align-items:center; gap:.5rem;
+  margin:0 0 .75rem;
+  padding:.625rem .875rem;
+  background:rgba(200,255,46,.09);
+  border:1px solid rgba(200,255,46,.34);
+  border-left:3px solid var(--lime);
+  border-radius:3px;
+  font-size:.875rem; font-weight:700; color:var(--fg);
+  max-width:520px;
+}
+.gate svg{ flex:none; }
+.gate b{ color:var(--lime); font-weight:900; font-family:var(--numeric);
+  font-size:1.0625rem; letter-spacing:.02em; padding:0 .1em; }
+.empty-gate{
+  margin-top:.25rem; font-size:.875rem; font-weight:700; color:var(--lime);
+}
+.void-lead{
+  margin:0 0 .875rem; font-size:1rem; font-weight:700; color:var(--fg);
+}
+.void-lead b{ color:var(--lime); font-family:var(--numeric);
+  font-size:1.125rem; letter-spacing:.02em; padding:0 .1em; }
+
 /* ---------- 空狀態（尚未查詢） ---------- */
 .empty{
   display:flex; flex-direction:column; align-items:center; gap:1.125rem;
@@ -654,6 +679,13 @@ body{
     </div>
 
     <div class="query rise" style="--i:4">
+      <p class="gate" id="gateNote">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8FF2E"
+             stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/>
+        </svg>
+        <span>本期活絡度滿 <b>300</b> 才會列入名單</span>
+      </p>
       <div class="query-row">
         <input class="field" id="nick" type="text" inputmode="text" autocomplete="off"
                placeholder="輸入遊戲暱稱" aria-label="遊戲暱稱">
@@ -689,6 +721,7 @@ const CONFIG = {
   PERIOD:      '20260810-0816',
   PERIOD_TEXT: '08.10 — 08.16',
   MAX_SCORE:   3452,
+  MIN_SCORE:   300,   // 入選門檻，由轉檔工具自動取名單最低分
   GUILDS:      ["小小妍", "小小高本尊", "小小商會", "我是TK"],
   PRIZES:      [10000, 20000, 40000]
 };
@@ -885,14 +918,9 @@ function renderFound(r){
 function renderVoid(raw){
   mount(`<div class="card card-void reveal">
     <h2 class="void-title">名單中查無「${esc(raw)}」</h2>
+    <p class="void-lead">本期活絡度未滿 <b>${CONFIG.MIN_SCORE}</b>，未列入名單。</p>
     <div class="void-body">
-      <p>可能的原因：</p>
-      <ul>
-        <li>暱稱與遊戲內顯示不完全相同（含符號、數字、空格）</li>
-        <li>本期未達獲獎標準，未列入名單</li>
-        <li>公會長尚未提交本期名單</li>
-      </ul>
-      <p style="margin-top:1rem;">請以遊戲內顯示的暱稱原樣重新輸入，或聯繫你的公會長確認。</p>
+      <p>若你確認本期活絡度已滿 ${CONFIG.MIN_SCORE}，請以遊戲內顯示的暱稱原樣重新輸入（含符號、數字、大小寫）。</p>
     </div>
   </div>`);
 }
@@ -949,7 +977,8 @@ function run(){
 function renderEmpty(){
   $res.innerHTML = `<div class="empty reveal" id="emptyState">
     <span class="empty-star" aria-hidden="true"></span>
-    <p class="empty-text"><b>還沒有查詢紀錄</b>在上方輸入你的遊戲暱稱，查詢本期星幣獎金。</p>
+    <p class="empty-text"><b>還沒有查詢紀錄</b>在上方輸入你的遊戲暱稱，查詢本期星幣獎金。
+      <span class="empty-gate">本期活絡度滿 ${CONFIG.MIN_SCORE} 才會列入名單</span></p>
   </div>`;
   const el = document.getElementById('emptyState');
   new IntersectionObserver((es,ob)=>{
@@ -961,6 +990,8 @@ renderEmpty();
 /* 期別文字由 CONFIG 帶入，換期只需改 CONFIG */
 document.getElementById('periodBadge').textContent = CONFIG.PERIOD_TEXT;
 document.getElementById('periodLine').textContent  = '2026 活絡度衝榜 · 第 ' + CONFIG.PERIOD + ' 期';
+document.querySelector('#gateNote span').innerHTML =
+  '本期活絡度滿 <b>' + CONFIG.MIN_SCORE + '</b> 才會列入名單';
 
 $go.addEventListener('click', run);
 $nick.addEventListener('keydown', e => { if(e.key === 'Enter') run(); });
